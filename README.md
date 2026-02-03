@@ -21,3 +21,8 @@ cd frontend
 npm install
 npm run dev
 ```
+## Database
+This project uses **MySQL** as the primary relational database for
+user management, chat history, and subscription data.
+
+
