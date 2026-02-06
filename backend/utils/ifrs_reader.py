@@ -3,8 +3,9 @@ import fitz
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PDF_FOLDER = os.path.join(BASE_DIR, "media", "ifrspdfs")
+PDF_FOLDER = r"C:\Users\11\3D Objects\Desktop\ifrs-chatbot-saas\backend\media\ifrs_pdfs"
+
+
 
 # -------------------------
 # PDF → TEXT
