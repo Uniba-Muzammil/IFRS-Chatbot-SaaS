@@ -1,64 +1,46 @@
+import fitz  # PyMuPDF
 import os
-import fitz
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
 
-PDF_FOLDER = r"C:\Users\11\3D Objects\Desktop\ifrs-chatbot-saas\backend\media\ifrs_pdfs"
-
+# -------------------------
+# PATH SETUP
+# -------------------------
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+PDF_DIR = os.path.join(BASE_DIR, "media", "ifrs_pdfs")
 
 
 # -------------------------
-# PDF → TEXT
+# LOAD ANY IFRS PDF
 # -------------------------
-def extract_pdf_text(pdf_path):
+def load_ifrs(ifrs_code):
+    """
+    Reads IFRS PDF and returns clean paragraph-wise data
+    Works for IFRS16, IFRS9, IFRS17, IFRS18
+    """
+
+    filename = f"{ifrs_code.lower()}.pdf"
+    pdf_path = os.path.join(PDF_DIR, filename)
+
+    if not os.path.exists(pdf_path):
+        raise FileNotFoundError(f"{filename} not found in media/ifrs_pdfs")
+
     doc = fitz.open(pdf_path)
-    text = ""
+
+    paragraphs = []
+    para_no = 1
+
     for page in doc:
-        text += page.get_text()
-    return text
+        text = page.get_text("text")
+        raw_paras = text.split("\n\n")
 
+        for para in raw_paras:
+            para = para.strip()
 
-# -------------------------
-# TEXT → CHUNKS
-# -------------------------
-def chunk_text(text, size=250):
-    words = text.split()
-    return [" ".join(words[i:i + size]) for i in range(0, len(words), size)]
+            if len(para) > 50:
+                paragraphs.append({
+                    "ifrs": ifrs_code.upper(),
+                    "para_no": para_no,
+                    "text": para
+                })
+                para_no += 1
 
-
-# -------------------------
-# LOAD ALL IFRS 16 DATA
-# -------------------------
-def load_ifrs_data():
-    chunks = []
-    sources = []
-
-    for file in os.listdir(PDF_FOLDER):
-        if file.endswith(".pdf"):
-            path = os.path.join(PDF_FOLDER, file)
-            text = extract_pdf_text(path)
-            text_chunks = chunk_text(text)
-
-            for chunk in text_chunks:
-                chunks.append(chunk)
-                sources.append(file)
-
-    return chunks, sources
-
-
-# -------------------------
-# ANSWER USER QUESTION
-# -------------------------
-def find_relevant_paragraph(question):
-    chunks, sources = load_ifrs_data()
-
-    vectorizer = TfidfVectorizer(stop_words="english")
-    vectors = vectorizer.fit_transform(chunks + [question])
-
-    scores = cosine_similarity(vectors[-1], vectors[:-1])
-    best_index = scores.argmax()
-
-    return {
-        "pdf": sources[best_index],
-        "text": chunks[best_index]
-    }
+    return paragraphs
