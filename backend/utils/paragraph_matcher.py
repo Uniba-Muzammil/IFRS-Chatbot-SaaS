@@ -1,63 +1,56 @@
-# backend/utils/paragraph_matcher.py
-
 import re
-from collections import Counter
+from utils.ifrs_reader import load_ifrs
 
-# -----------------------------
-# STEP 1: clean & tokenize text
-# -----------------------------
-def tokenize(text):
-    text = text.lower()
-    text = re.sub(r"[^a-z0-9\s]", " ", text)
-    return text.split()
 
-# -----------------------------
-# STEP 2: keyword extraction
-# -----------------------------
+# -------------------------
+# CLEAN & EXTRACT KEYWORDS
+# -------------------------
 def extract_keywords(question):
+    """
+    Extracts meaningful keywords from user question
+    """
+    question = question.lower()
+
     stopwords = {
-        "what", "is", "the", "how", "are", "of", "in",
-        "to", "for", "and", "a", "an", "does", "be"
+        "what", "is", "are", "the", "how", "does", "do",
+        "a", "an", "of", "to", "in", "for", "and", "on",
+        "with", "be", "by", "under"
     }
-    words = tokenize(question)
-    return [w for w in words if w not in stopwords]
 
-# -----------------------------
-# STEP 3: paragraph scoring
-# -----------------------------
-def score_paragraph(paragraph_text, keywords):
-    paragraph_words = tokenize(paragraph_text)
-    word_counts = Counter(paragraph_words)
+    words = re.findall(r"[a-zA-Z]{3,}", question)
 
-    score = 0
-    for kw in keywords:
-        score += word_counts.get(kw, 0)
+    keywords = [w for w in words if w not in stopwords]
 
-    return score
+    return list(set(keywords))
 
-# -----------------------------
-# STEP 4: match best paragraphs
-# -----------------------------
-def find_relevant_paragraphs(question, paragraphs, top_n=3):
+
+# -------------------------
+# FIND RELEVANT PARAGRAPHS
+# -------------------------
+def find_relevant_paragraphs(question, ifrs_code, top_n=5):
     """
-    paragraphs = list of dicts
-    [
-      {
-        "ifrs": "IFRS16",
-        "para_no": "26",
-        "text": "At the commencement date..."
-      }
-    ]
+    Finds most relevant IFRS paragraphs based on keyword match
     """
 
+    paragraphs = load_ifrs(ifrs_code)
     keywords = extract_keywords(question)
 
-    scored = []
+    scored_results = []
+
     for para in paragraphs:
-        score = score_paragraph(para["text"], keywords)
+        text = para["text"].lower()
+
+        score = sum(1 for kw in keywords if kw in text)
+
         if score > 0:
-            scored.append((score, para))
+            scored_results.append({
+                "ifrs": para["ifrs"],
+                "para_no": para["para_no"],
+                "text": para["text"],
+                "score": score
+            })
 
-    scored.sort(reverse=True, key=lambda x: x[0])
+    scored_results.sort(key=lambda x: x["score"], reverse=True)
 
-    return [para for score, para in scored[:top_n]]
+    return scored_results[:top_n]
+
