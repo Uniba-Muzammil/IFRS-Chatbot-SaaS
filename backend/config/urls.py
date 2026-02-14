@@ -16,7 +16,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from chat.views import ifrs_chatbot   # 👈 import your view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/ask/', ifrs_chatbot),   # 👈 add this line
 ]
+
+
