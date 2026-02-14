@@ -1,32 +1,22 @@
-import fitz  # PyMuPDF
+import fitz
 import os
+import re
 
-# -------------------------
-# PATH SETUP
-# -------------------------
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 PDF_DIR = os.path.join(BASE_DIR, "media", "ifrs_pdfs")
 
 
-# -------------------------
-# LOAD ANY IFRS PDF
-# -------------------------
-def load_ifrs(ifrs_code):
-    """
-    Reads IFRS PDF and returns clean paragraph-wise data
-    Works for IFRS16, IFRS9, IFRS17, IFRS18
-    """
+def load_ifrs_paragraphs(ifrs_code):
 
     filename = f"{ifrs_code.lower()}.pdf"
     pdf_path = os.path.join(PDF_DIR, filename)
 
     if not os.path.exists(pdf_path):
-        raise FileNotFoundError(f"{filename} not found in media/ifrs_pdfs")
+        raise FileNotFoundError(f"{filename} not found.")
 
     doc = fitz.open(pdf_path)
 
     paragraphs = []
-    para_no = 1
 
     for page in doc:
         text = page.get_text("text")
@@ -35,12 +25,14 @@ def load_ifrs(ifrs_code):
         for para in raw_paras:
             para = para.strip()
 
-            if len(para) > 50:
+            if len(para) > 80:
+                match = re.match(r"^([A-Z]?\d+[A-Z]?)", para)
+                para_no = match.group(1) if match else None
+
                 paragraphs.append({
                     "ifrs": ifrs_code.upper(),
                     "para_no": para_no,
                     "text": para
                 })
-                para_no += 1
 
     return paragraphs
