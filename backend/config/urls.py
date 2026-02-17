@@ -1,26 +1,3 @@
-"""
-URL configuration for config project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
-from django.contrib import admin
-from django.urls import path
-from chat.views import ifrs_chatbot   # 👈 import your view
-
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/ask/', ifrs_chatbot),   # 👈 add this line
-]
-
-
+version https://git-lfs.github.com/spec/v1
+oid sha256:b046db19084d478942a45f0ce9f65f341766de89f168b5fa1330f2139749a097
+size 915
